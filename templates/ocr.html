@@ -1,0 +1,245 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title></title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+@media (min-width: 768px){
+  .container{
+    max-width:100%;
+  }  
+}
+
+@media (min-width: 992px){
+  .container{
+    max-width:100%;
+  }
+}
+
+body {
+    background-color: black;
+}
+
+.main-container, .main-row {
+    height: calc(100vh - 200px);
+}
+
+.container .row div {
+    /* border: 1px solid #aeaeae; */
+}
+
+.scan-col {
+    background: #eaeaea;
+}
+
+.envelope-col {
+    background: #eaeaea;
+    border-left: 2px solid #aeaeae;
+}
+
+.data-col {
+    width: 300px;
+}
+
+.status-col {
+    width: 200px;
+}
+
+.envelope {
+    width: 100%;
+}
+
+#envelope-data span {
+    font-size: smaller;
+}
+
+
+
+.capturePreview {
+    background-color: black;
+    border-bottom: 1px solid #aeaeae;
+}
+
+.camera-wrapper {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+video {
+    /* 1920 × 1080
+    height: 1920px;
+    width: 1080px;
+    chop off 180px on each side
+    */
+    width: 100%;
+    display: block;
+    height: 100%;
+}
+
+.overlay {
+    position: absolute;
+    border: 5px solid lime;
+    border-radius: 5px;
+    z-index: 99;
+    opacity: 0.7;
+
+}
+
+
+
+.footer {
+    height: 200px;
+
+    border-top: 2px solid #aeaeae;
+    font-size: .8rem;
+
+    position: absolute;
+    bottom: 3px;
+}
+
+.messages {
+    overflow: auto;
+    border-right: 2px solid #aeaeae;
+    height: 200px;
+}
+
+.history {
+    overflow: auto;
+    border-left: 2px solid #aeaeae;
+    height: 200px;
+}
+
+.history img {
+    height: 100px;
+}
+
+.history div {
+    padding: .5rem;
+    margin: .4rem 0;
+    border: 1px solid #eaeaea;
+}
+
+.history div:hover {
+    border: 1px solid #3e3e3e;
+}
+
+.history .btn-danger {
+    font-size: .6rem;
+    display: none;
+}
+
+.history div:hover .btn-danger {
+    display: inline;
+}
+
+.deleted {
+    background-color: #dc3545;
+}
+
+.btn {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.alert {
+    padding: .4rem;
+    margin: .25rem 0;
+}
+
+.badge {
+    font-size: 1.5rem;
+    margin: .4rem;
+}
+
+
+</style>
+
+  </head>
+  <body>
+
+    <div class="" id="annotations">
+        
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script>
+let working = false;
+let view = "preview"; // or capture
+
+let anno_ready = true;
+
+function wsMessage(event) {
+    let data = JSON.parse(event.data);
+
+    console.log(data)
+
+    if (data["data"]) {
+        // Data packet to update something
+        let group = data["group"];
+
+        data = data["data"];
+        let cachebuster = new Date().getTime();
+
+        if (group === "annotations" && anno_ready) {
+            anno_ready = false;
+            $('#annotations').html("");
+
+            for(let annotation of data["text"]) {
+                $('#annotations').append(`<span class="badge rounded-pill bg-secondary">${annotation}</span>`)
+                console.log(annotation);
+            }
+        }
+
+        if (group === "clear") {
+            $('#annotations').html("");
+            anno_ready = true;
+        }
+    }
+}
+
+
+
+const wsUrl = 'ws://' + window.location.host + '/ws/capture/';
+let socket = null;
+const createConnection = () => {
+    socket = new WebSocket(wsUrl);
+
+    socket.addEventListener('open', function (event) {
+        console.log('connection made to server:', event);
+    });
+
+    socket.addEventListener('close', function (event) {
+        console.log('connection closed:', event);
+        socket.close();
+        setTimeout(createConnection, 2500);  // reconnect here
+    });
+
+    socket.addEventListener('message', function (event) {
+        console.log('ws client received message:', event);
+        wsMessage(event);
+        //location.reload();
+    });
+
+};
+
+
+createConnection();
+
+
+$(document).ready(function() {
+
+});
+</script>
+  </body>
+</html>
